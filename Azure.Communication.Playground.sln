@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31710.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Communication.Playground", "Azure.Communication.Playground\Azure.Communication.Playground.csproj", "{A7EAE6BB-A3B9-456E-A6BE-7CF34A9228E3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A7EAE6BB-A3B9-456E-A6BE-7CF34A9228E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7EAE6BB-A3B9-456E-A6BE-7CF34A9228E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7EAE6BB-A3B9-456E-A6BE-7CF34A9228E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7EAE6BB-A3B9-456E-A6BE-7CF34A9228E3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {554CBB6D-8FFE-4B0D-BC8C-26B6B1F2CE67}
+	EndGlobalSection
+EndGlobal
