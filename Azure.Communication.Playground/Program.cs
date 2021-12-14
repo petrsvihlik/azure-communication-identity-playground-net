@@ -25,6 +25,7 @@ namespace Azure.Communication.Playground
             var env = GetEnumFromCLI<Environment>();
             var api = GetEnumFromCLI<ApiType>();
             var version = GetEnumFromCLI(ServiceVersion.V2021_10_31_preview);
+            var accountType = GetEnumFromCLI<AccountType>();
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
 
             Console.WriteLine("Custom Teams Endpoint Playground");
@@ -43,32 +44,33 @@ namespace Azure.Communication.Playground
                 case ApiType.SDK:
                     communicationClient = new($"endpoint=https://{host}/;accesskey={secret}", new CommunicationIdentityClientOptions(version));
                     break;
-
             }
 
             switch (op)
             {
                 case Operation.ExchangeToken:
-                    var aadToken = await GetAADAccessToken();
-
-                    switch (api)
+                    var aadToken = await GetAADAccessToken(accountType);
+                    if (!string.IsNullOrEmpty(aadToken))
                     {
-                        case ApiType.REST:
-                            var request = new { Token = aadToken };
-                            var json = JsonConvert.SerializeObject(request);
-                            var data = new StringContent(json, Encoding.UTF8, "application/json");
-                            var message = new HttpRequestMessage(HttpMethod.Post, $"/teamsUser/:exchangeAccessToken?api-version={versionString}")
-                            {
-                                Content = data
-                            };
-                            string responseContent = await SendMessage(httpClient, message, secret);
-                            Console.WriteLine(responseContent);
-                            break;
+                        switch (api)
+                        {
+                            case ApiType.REST:
+                                var request = new { Token = aadToken };
+                                var json = JsonConvert.SerializeObject(request);
+                                var data = new StringContent(json, Encoding.UTF8, "application/json");
+                                var message = new HttpRequestMessage(HttpMethod.Post, $"/teamsUser/:exchangeAccessToken?api-version={versionString}")
+                                {
+                                    Content = data
+                                };
+                                string responseContent = await SendMessage(httpClient, message, secret);
+                                Console.WriteLine(responseContent);
+                                break;
 
-                        case ApiType.SDK:
-                            var acsToken = await communicationClient.GetTokenForTeamsUserAsync(aadToken);
-                            Console.WriteLine($"ACS token: {acsToken.Value.Token}");
-                            break;
+                            case ApiType.SDK:
+                                var acsToken = await communicationClient.GetTokenForTeamsUserAsync(aadToken);
+                                Console.WriteLine($"ACS token: {acsToken.Value.Token}");
+                                break;
+                        }
                     }
                     break;
 
@@ -133,25 +135,39 @@ namespace Azure.Communication.Playground
             return httpClient;
         }
 
-        private static async Task<string> GetAADAccessToken()
+        private static async Task<string> GetAADAccessToken(AccountType accountType)
         {
-            var clientId = _config.GetSection("AAD:ClientID").Value;
-            var tenant = _config.GetSection("AAD:TenantID").Value;
+            var clientId = _config.GetSection($"AAD:{accountType}:ClientID").Value;
+            var tenantId = _config.GetSection($"AAD:{accountType}:TenantID").Value;
             var redirectUri = "http://localhost";
 
-            var client = PublicClientApplicationBuilder
-                .Create(clientId)
-                .WithAuthority(AzureCloudInstance.AzurePublic, tenant)
-                //.WithAuthority("https://login.microsoftonline.com/common") // For multi-tenant scenarios
-                //.WithAuthority($"M365AadAuthority/tenantId") // For multi-tenant scenarios
-                .WithRedirectUri(redirectUri)
-                .Build();
+            IPublicClientApplication client = null;
+            switch (accountType)
+            {
+                case AccountType.SingleTenant:
+                    client = PublicClientApplicationBuilder
+                        .Create(clientId)
+                        .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                        .WithRedirectUri(redirectUri)
+                        .Build();
+                    break;
+
+                case AccountType.MultiTenant:
+                    client = PublicClientApplicationBuilder
+                        .Create(clientId)
+                        .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                        //.WithAuthority("https://login.microsoftonline.com/common") // See all mutli-tenant authority configurations at https://docs.microsoft.com/en-us/azure/active-directory/develop/msal-client-application-configuration#authority
+                        .WithAuthority($"https://login.microsoftonline.com/{tenantId}")
+                        .WithRedirectUri(redirectUri)
+                        .Build();
+                    break;
+            }
 
             Console.WriteLine("Acquiring AAD Access Token...");
 
             // Interactive flow
             var authResult = await client.AcquireTokenInteractive(new[] { /*"https://auth.msft.communication.azure.com/.default"*/ "https://auth.msft.communication.azure.com/VoIP" }).ExecuteAsync();
-            
+
             // Non-interactive flow
             //var tokenResult = client.AcquireTokenByUsernamePassword("M365Scope", "username", new System.Security.SecureString()).ExecuteAsync();
 

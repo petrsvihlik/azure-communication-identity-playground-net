@@ -1,11 +1,8 @@
 ﻿namespace Azure.Communication.Playground
 {
-    internal partial class Program
+    enum Operation
     {
-        enum Operation
-        {
-            ExchangeToken,
-            IssueToken
-        }
+        ExchangeToken,
+        IssueToken
     }
 }

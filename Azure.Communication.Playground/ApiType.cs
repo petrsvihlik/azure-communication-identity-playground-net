@@ -1,11 +1,8 @@
 ﻿namespace Azure.Communication.Playground
 {
-    internal partial class Program
+    enum ApiType
     {
-        private enum ApiType
-        {
-            SDK,
-            REST
-        }
+        SDK,
+        REST
     }
 }
