@@ -14,6 +14,7 @@ namespace Azure.Communication.Playground
     internal partial class Program
     {
         static IConfigurationRoot _config;
+
         static async Task Main(string[] args)
         {
             _config = new ConfigurationBuilder()
@@ -21,24 +22,24 @@ namespace Azure.Communication.Playground
                 .AddUserSecrets<Program>()
                 .Build();
 
-            var op = GetEnumFromCLI<Operation>();
-            var env = GetEnumFromCLI<Environment>();
-            var api = GetEnumFromCLI<ApiType>();
-            var version = GetEnumFromCLI(ServiceVersion.V2021_10_31_preview);
-            var accountType = GetEnumFromCLI<AccountType>();
+            var op = CliHelper.GetEnumFromCLI<Operation>();
+            var env = CliHelper.GetEnumFromCLI<Environment>();
+            var api = CliHelper.GetEnumFromCLI<ApiType>();
+            var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2021_10_31_preview);
+            var accountType = CliHelper.GetEnumFromCLI<AccountType>();
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
 
             Console.WriteLine("Custom Teams Endpoint Playground");
 
-            string host = GetHost(env);
-            string secret = _config.GetSection($"{env}:Secret").Value;
+            var (host, secret) = GetEnvSettings(env);
+
             CommunicationIdentityClient communicationClient = null;
             HttpClient httpClient = null;
 
             switch (api)
             {
                 case ApiType.REST:
-                    httpClient = GetHttpClient(new Uri($"https://{host}"));
+                    httpClient = HttpHelper.GetHttpClient(new Uri($"https://{host}"));
                     break;
 
                 case ApiType.SDK:
@@ -62,7 +63,7 @@ namespace Azure.Communication.Playground
                                 {
                                     Content = data
                                 };
-                                string responseContent = await SendMessage(httpClient, message, secret);
+                                string responseContent = await HttpHelper.SendMessage(httpClient, message, secret);
                                 Console.WriteLine(responseContent);
                                 break;
 
@@ -82,7 +83,7 @@ namespace Azure.Communication.Playground
                             {
                                 Content = new StringContent(@"{""createTokenWithScopes"": [""chat""]}", Encoding.UTF8, "application/json")
                             };
-                            string responseContent = await SendMessage(httpClient, message, secret);
+                            string responseContent = await HttpHelper.SendMessage(httpClient, message, secret);
                             Console.WriteLine(responseContent);
                             break;
 
@@ -97,16 +98,10 @@ namespace Azure.Communication.Playground
             Console.ReadLine();
         }
 
-        private static async Task<string> SendMessage(HttpClient httpClient, HttpRequestMessage message, string secret)
-        {
-            await message.AddAuthorization(secret);
-            var response = await httpClient.SendAsync(message);
-            return await response.Content.ReadAsStringAsync();
-        }
-
-        private static string GetHost(Environment env)
+        private static (string, string) GetEnvSettings(Environment env)
         {
             string host = null;
+            string secret = _config.GetSection($"{env}:Secret").Value;
             switch (env)
             {
                 case Environment.PPE:
@@ -118,21 +113,7 @@ namespace Azure.Communication.Playground
                     break;
             }
 
-            return host;
-        }
-
-        private static HttpClient GetHttpClient(Uri baseUri)
-        {
-            var handler = new HttpClientHandler
-            {
-                ClientCertificateOptions = ClientCertificateOption.Manual,
-                ServerCertificateCustomValidationCallback = (a, b, c, d) => { return true; } // Don't check certificates
-            };
-            var httpClient = new HttpClient(handler)
-            {
-                BaseAddress = baseUri
-            };
-            return httpClient;
+            return (host, secret);
         }
 
         private static async Task<string> GetAADAccessToken(AccountType accountType)
@@ -176,19 +157,6 @@ namespace Azure.Communication.Playground
 
             Console.WriteLine("Acquiring ACS Token...");
             return authResult.AccessToken;
-        }
-
-        private static T GetEnumFromCLI<T>(T defVal = default) where T : struct, Enum
-        {
-            T value = defVal;
-            Console.WriteLine($"Specify the {value.GetType().Name}: ");
-            foreach (var item in Enum.GetValues(typeof(T)))
-            {
-                string defString = ((int)item) == Convert.ToInt32(defVal) ? " (default)" : "";
-                Console.WriteLine($"\t- {item}: {(int)item}{defString}");
-            }
-            var succ = Enum.TryParse(Console.ReadLine(), out value);
-            return succ ? value : defVal;
         }
     }
 }
