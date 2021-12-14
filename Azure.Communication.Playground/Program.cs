@@ -142,6 +142,9 @@ namespace Azure.Communication.Playground
             var redirectUri = "http://localhost";
 
             IPublicClientApplication client = null;
+
+            // See all mutli-tenant authority configurations at
+            // https://docs.microsoft.com/en-us/azure/active-directory/develop/msal-client-application-configuration#authority
             switch (accountType)
             {
                 case AccountType.SingleTenant:
@@ -155,8 +158,6 @@ namespace Azure.Communication.Playground
                 case AccountType.MultiTenant:
                     client = PublicClientApplicationBuilder
                         .Create(clientId)
-                        .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
-                        //.WithAuthority("https://login.microsoftonline.com/common") // See all mutli-tenant authority configurations at https://docs.microsoft.com/en-us/azure/active-directory/develop/msal-client-application-configuration#authority
                         .WithAuthority($"https://login.microsoftonline.com/{tenantId}")
                         .WithRedirectUri(redirectUri)
                         .Build();
@@ -166,7 +167,7 @@ namespace Azure.Communication.Playground
             Console.WriteLine("Acquiring AAD Access Token...");
 
             // Interactive flow
-            var authResult = await client.AcquireTokenInteractive(new[] { /*"https://auth.msft.communication.azure.com/.default"*/ "https://auth.msft.communication.azure.com/VoIP" }).ExecuteAsync();
+            var authResult = await client.AcquireTokenInteractive(new[] { "https://auth.msft.communication.azure.com/VoIP" }).ExecuteAsync();
 
             // Non-interactive flow
             //var tokenResult = client.AcquireTokenByUsernamePassword("M365Scope", "username", new System.Security.SecureString()).ExecuteAsync();
