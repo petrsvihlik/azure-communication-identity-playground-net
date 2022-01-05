@@ -17,6 +17,8 @@ namespace Azure.Communication.Playground
 
         static async Task Main(string[] args)
         {
+            Console.WriteLine("Custom Teams Endpoint Playground");
+
             _config = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                 .AddUserSecrets<Program>()
@@ -26,10 +28,7 @@ namespace Azure.Communication.Playground
             var env = CliHelper.GetEnumFromCLI<Environment>();
             var api = CliHelper.GetEnumFromCLI<ApiType>();
             var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2021_10_31_preview);
-            var accountType = CliHelper.GetEnumFromCLI<AccountType>();
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
-
-            Console.WriteLine("Custom Teams Endpoint Playground");
 
             var (host, secret) = GetEnvSettings(env);
 
@@ -50,6 +49,7 @@ namespace Azure.Communication.Playground
             switch (op)
             {
                 case Operation.ExchangeToken:
+                    var accountType = CliHelper.GetEnumFromCLI<AccountType>();
                     var aadToken = await GetAADAccessToken(accountType);
                     if (!string.IsNullOrEmpty(aadToken))
                     {
@@ -148,7 +148,7 @@ namespace Azure.Communication.Playground
             Console.WriteLine("Acquiring AAD Access Token...");
 
             // Interactive flow
-            var authResult = await client.AcquireTokenInteractive(new[] { "https://auth.msft.communication.azure.com/VoIP" }).ExecuteAsync();
+            var authResult = await client.AcquireTokenInteractive(new[] { "https://auth.msft.communication.azure.com/Teams.ManageCalls" }).ExecuteAsync();
 
             // Non-interactive flow
             //var tokenResult = client.AcquireTokenByUsernamePassword("M365Scope", "username", new System.Security.SecureString()).ExecuteAsync();
