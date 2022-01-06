@@ -17,7 +17,8 @@ namespace Azure.Communication.Playground
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Custom Teams Endpoint Playground");
+            Console.WriteLine("Azure Communication Services - Identity Playground");
+            Console.WriteLine("--------------------------------------------------\n");
 
             _config = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
