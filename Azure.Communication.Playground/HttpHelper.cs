@@ -8,7 +8,7 @@ namespace Azure.Communication.Playground
     {
         public static async Task<string> SendMessage(HttpClient httpClient, HttpRequestMessage message, string secret)
         {
-            await message.AddAuthorization(secret);
+            await message.AddAuthorization(secret, httpClient.BaseAddress.Authority);
             var response = await httpClient.SendAsync(message);
             return await response.Content.ReadAsStringAsync();
         }

@@ -3,6 +3,7 @@
     enum Operation
     {
         ExchangeToken,
-        IssueToken
+        IssueToken,
+        RevokeToken
     }
 }

@@ -94,6 +94,25 @@ namespace Azure.Communication.Playground
                             break;
                     }
                     break;
+
+                case Operation.RevokeToken:
+                    Console.Write("Enter user id: ");
+                    var userId = Console.ReadLine();
+                    switch(api)
+                    {
+                        case ApiType.REST:
+                            var message = new HttpRequestMessage(HttpMethod.Post, $"/identities/{userId}/:revokeAccessTokens?api-version={versionString}");
+                            string responseContent = await HttpHelper.SendMessage(httpClient, message, secret);
+                            Console.WriteLine(responseContent);
+                            break;
+
+                        case ApiType.SDK:
+                            var user = new CommunicationUserIdentifier(userId);
+                            var response = communicationClient.RevokeTokens(user);
+                            Console.WriteLine(response.ReasonPhrase);
+                            break;
+                    }
+                    break;                
             }
 
             Console.ReadLine();

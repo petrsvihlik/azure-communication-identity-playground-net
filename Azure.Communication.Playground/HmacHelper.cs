@@ -9,17 +9,17 @@ namespace Azure.Communication.Playground
 {
     public static class HmacHelper
     {
-        public static async Task AddAuthorization(this HttpRequestMessage request, string secret)
+        public static async Task AddAuthorization(this HttpRequestMessage request, string secret, string host)
         {
             _ = request ?? throw new ArgumentNullException(nameof(request));
             var date = DateTimeOffset.UtcNow.ToString("r", CultureInfo.InvariantCulture);
             var pathAndQuery = request.RequestUri.IsAbsoluteUri
                 ? request.RequestUri.PathAndQuery
-                : $"/{request.RequestUri.OriginalString}";
+                : request.RequestUri.OriginalString;
             var contentHash = await ComputeContentHash(request.Content);
 
 
-            var phrase = $"{request.Method.Method}\n{pathAndQuery}\n{date};{request.RequestUri.Authority};{contentHash}";
+            var phrase = $"{request.Method.Method}\n{pathAndQuery}\n{date};{host};{contentHash}";
             var hash = ComputesSignature(phrase, secret);
             var hmacHeader = $"HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature={hash}";
             request.Headers.Add("x-ms-content-sha256", contentHash);
