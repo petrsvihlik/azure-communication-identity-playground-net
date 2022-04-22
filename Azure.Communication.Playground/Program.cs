@@ -110,7 +110,7 @@ namespace Azure.Communication.Playground
                             break;
 
                         case ApiType.SDK:
-                            var userTokenResponse = communicationClient.GetToken(new CommunicationUserIdentifier(userId),new List<CommunicationTokenScope> { "chat" });
+                            var userTokenResponse = communicationClient.GetToken(new CommunicationUserIdentifier(userId), new List<CommunicationTokenScope> { "chat" });
                             Console.WriteLine($"Token: {userTokenResponse.Value.Token}");
                             break;
                     }
@@ -119,7 +119,7 @@ namespace Azure.Communication.Playground
                 case Operation.RevokeToken:
                     Console.Write("Enter user id: ");
                     userId = Console.ReadLine();
-                    switch(api)
+                    switch (api)
                     {
                         case ApiType.REST:
                             var message = new HttpRequestMessage(HttpMethod.Post, $"/identities/{userId}/:revokeAccessTokens?api-version={versionString}");
@@ -133,7 +133,7 @@ namespace Azure.Communication.Playground
                             Console.WriteLine(response.ReasonPhrase);
                             break;
                     }
-                    break;                
+                    break;
             }
 
             Console.ReadLine();
