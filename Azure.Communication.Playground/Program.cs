@@ -30,7 +30,7 @@ namespace Azure.Communication.Playground
             var api = CliHelper.GetEnumFromCLI<ApiType>();
             var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2021_10_31_preview);
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
-
+            string userId = null;
             var (host, secret) = GetEnvSettings(env);
 
             CommunicationIdentityClient communicationClient = null;
@@ -76,7 +76,7 @@ namespace Azure.Communication.Playground
                     }
                     break;
 
-                case Operation.IssueToken:
+                case Operation.CreateUserAndToken:
                     switch (api)
                     {
                         case ApiType.REST:
@@ -95,9 +95,30 @@ namespace Azure.Communication.Playground
                     }
                     break;
 
+                case Operation.IssueToken:
+                    Console.Write("Enter user id: ");
+                    userId = Console.ReadLine();
+                    switch (api)
+                    {
+                        case ApiType.REST:
+                            var message = new HttpRequestMessage(HttpMethod.Post, $"/identities/{userId}/:issueAccessToken?api-version={versionString}")
+                            {
+                                Content = new StringContent(@"{""createTokenWithScopes"": [""chat""]}", Encoding.UTF8, "application/json")
+                            };
+                            string responseContent = await HttpHelper.SendMessage(httpClient, message, secret);
+                            Console.WriteLine(responseContent);
+                            break;
+
+                        case ApiType.SDK:
+                            var userTokenResponse = communicationClient.GetToken(new CommunicationUserIdentifier(userId),new List<CommunicationTokenScope> { "chat" });
+                            Console.WriteLine($"Token: {userTokenResponse.Value.Token}");
+                            break;
+                    }
+                    break;
+
                 case Operation.RevokeToken:
                     Console.Write("Enter user id: ");
-                    var userId = Console.ReadLine();
+                    userId = Console.ReadLine();
                     switch(api)
                     {
                         case ApiType.REST:
