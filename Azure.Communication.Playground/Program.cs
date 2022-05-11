@@ -161,11 +161,11 @@ namespace Azure.Communication.Playground
         {
             var clientId = _config.GetSection($"AAD:{accountType}:ClientID").Value;
             var tenantId = _config.GetSection($"AAD:{accountType}:TenantID").Value;
-            var redirectUri = "http://localhost";
+            var redirectUri = "http://localhost:3000/mobile";
 
             IPublicClientApplication client = null;
 
-            // See all mutli-tenant authority configurations at
+            // See all multi-tenant authority configurations at
             // https://docs.microsoft.com/en-us/azure/active-directory/develop/msal-client-application-configuration#authority
             switch (accountType)
             {
