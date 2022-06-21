@@ -28,7 +28,7 @@ namespace Azure.Communication.Playground
             var op = CliHelper.GetEnumFromCLI<Operation>();
             var env = CliHelper.GetEnumFromCLI<Environment>();
             var api = CliHelper.GetEnumFromCLI<ApiType>();
-            var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2021_10_31_preview);
+            var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2022_06_01);
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
             string userId = null;
             var (host, secret) = GetEnvSettings(env);
@@ -51,13 +51,13 @@ namespace Azure.Communication.Playground
             {
                 case Operation.ExchangeToken:
                     var accountType = CliHelper.GetEnumFromCLI<AccountType>();
-                    var aadToken = await GetAADAccessToken(accountType);
-                    if (!string.IsNullOrEmpty(aadToken))
+                    var options = await CreateGetTokenForTeamsUserOptions(accountType);
+                    if (options != null)
                     {
                         switch (api)
                         {
                             case ApiType.REST:
-                                var request = new { Token = aadToken };
+                                var request = new { Token = options.TeamsUserAadToken, AppId = options.ClientId, UserId = options.UserObjectId };
                                 var json = JsonConvert.SerializeObject(request);
                                 var data = new StringContent(json, Encoding.UTF8, "application/json");
                                 var message = new HttpRequestMessage(HttpMethod.Post, $"/teamsUser/:exchangeAccessToken?api-version={versionString}")
@@ -69,7 +69,7 @@ namespace Azure.Communication.Playground
                                 break;
 
                             case ApiType.SDK:
-                                var acsToken = await communicationClient.GetTokenForTeamsUserAsync(aadToken);
+                                var acsToken = await communicationClient.GetTokenForTeamsUserAsync(options);
                                 Console.WriteLine($"ACS token: {acsToken.Value.Token}");
                                 break;
                         }
@@ -157,11 +157,11 @@ namespace Azure.Communication.Playground
             return (host, secret);
         }
 
-        private static async Task<string> GetAADAccessToken(AccountType accountType)
+        private static async Task<GetTokenForTeamsUserOptions> CreateGetTokenForTeamsUserOptions(AccountType accountType)
         {
             var clientId = _config.GetSection($"AAD:{accountType}:ClientID").Value;
             var tenantId = _config.GetSection($"AAD:{accountType}:TenantID").Value;
-            var redirectUri = "http://localhost:3000/mobile";
+            var redirectUri = "http://localhost";
 
             IPublicClientApplication client = null;
 
@@ -186,7 +186,7 @@ namespace Azure.Communication.Playground
                     break;
             }
 
-            Console.WriteLine("Acquiring AAD Access Token...");
+            Console.WriteLine("Acquiring AAD Access Token and Object ID...");
 
             // Interactive flow
             var authResult = await client.AcquireTokenInteractive(new[] { "https://auth.msft.communication.azure.com/Teams.ManageCalls" }).ExecuteAsync();
@@ -194,10 +194,12 @@ namespace Azure.Communication.Playground
             // Non-interactive flow
             //var tokenResult = client.AcquireTokenByUsernamePassword("M365Scope", "username", new System.Security.SecureString()).ExecuteAsync();
 
-            Console.WriteLine($"AAD Access token: {authResult.AccessToken}");
 
-            Console.WriteLine("Acquiring ACS Token...");
-            return authResult.AccessToken;
+            string teamsUserAadToken = authResult.AccessToken;
+            Console.WriteLine($"AAD Access token: {teamsUserAadToken}");
+            string userObjectId = authResult.UniqueId;
+            Console.WriteLine($"AAD Object ID: {userObjectId}");
+            return new GetTokenForTeamsUserOptions(teamsUserAadToken, clientId, userObjectId);
         }
     }
 }
