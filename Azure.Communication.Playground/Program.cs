@@ -28,9 +28,10 @@ namespace Azure.Communication.Playground
             var op = CliHelper.GetEnumFromCLI<Operation>();
             var env = CliHelper.GetEnumFromCLI<Environment>();
             var api = CliHelper.GetEnumFromCLI<ApiType>();
-            var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2021_10_31_preview);
+            var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2022_06_01);
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
             string userId = null;
+
             var (host, secret) = GetEnvSettings(env);
 
             CommunicationIdentityClient communicationClient = null;
@@ -51,7 +52,8 @@ namespace Azure.Communication.Playground
             {
                 case Operation.ExchangeToken:
                     var accountType = CliHelper.GetEnumFromCLI<AccountType>();
-                    var aadToken = await GetAADAccessToken(accountType);
+                    (string aadToken, string userObjectId) = await GetAADAccessTokenAndUser(accountType);
+
                     if (!string.IsNullOrEmpty(aadToken))
                     {
                         switch (api)
@@ -69,7 +71,7 @@ namespace Azure.Communication.Playground
                                 break;
 
                             case ApiType.SDK:
-                                var acsToken = await communicationClient.GetTokenForTeamsUserAsync(aadToken);
+                                var acsToken = await communicationClient.GetTokenForTeamsUserAsync(new GetTokenForTeamsUserOptions(aadToken, _config.GetSection($"AAD:{accountType}:ClientID").Value, userObjectId));
                                 Console.WriteLine($"ACS token: {acsToken.Value.Token}");
                                 break;
                         }
@@ -157,7 +159,7 @@ namespace Azure.Communication.Playground
             return (host, secret);
         }
 
-        private static async Task<string> GetAADAccessToken(AccountType accountType)
+        private static async Task<(string aadToken, string userObjectId)> GetAADAccessTokenAndUser(AccountType accountType)
         {
             var clientId = _config.GetSection($"AAD:{accountType}:ClientID").Value;
             var tenantId = _config.GetSection($"AAD:{accountType}:TenantID").Value;
@@ -189,7 +191,7 @@ namespace Azure.Communication.Playground
             Console.WriteLine("Acquiring AAD Access Token...");
 
             // Interactive flow
-            var authResult = await client.AcquireTokenInteractive(new[] { "https://auth.msft.communication.azure.com/Teams.ManageCalls" }).ExecuteAsync();
+            var authResult = await client.AcquireTokenInteractive(new[] { "https://auth.msft.communication.azure.com/Teams.ManageCalls", "https://auth.msft.communication.azure.com/Teams.ManageChats" }).ExecuteAsync();
 
             // Non-interactive flow
             //var tokenResult = client.AcquireTokenByUsernamePassword("M365Scope", "username", new System.Security.SecureString()).ExecuteAsync();
@@ -197,7 +199,7 @@ namespace Azure.Communication.Playground
             Console.WriteLine($"AAD Access token: {authResult.AccessToken}");
 
             Console.WriteLine("Acquiring ACS Token...");
-            return authResult.AccessToken;
+            return (authResult.AccessToken, authResult.UniqueId);
         }
     }
 }
