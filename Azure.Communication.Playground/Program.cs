@@ -191,15 +191,26 @@ namespace Azure.Communication.Playground
             Console.WriteLine("Acquiring AAD Access Token...");
 
             // Interactive flow
-            var authResult = await client.AcquireTokenInteractive(new[] { "https://auth.msft.communication.azure.com/Teams.ManageCalls", "https://auth.msft.communication.azure.com/Teams.ManageChats" }).ExecuteAsync();
+            var authAndConsent = await client
+                .AcquireTokenInteractive(new[] {
+                    "User.Read" })
+                .WithExtraScopesToConsent(new[] {
+                    "https://auth.msft.communication.azure.com/Teams.ManageCalls",
+                    "https://auth.msft.communication.azure.com/Teams.ManageChats"
+                })
+                .ExecuteAsync();
 
+            var tokenResult = await client.AcquireTokenSilent(new[] {
+                    "https://auth.msft.communication.azure.com/Teams.ManageCalls",
+                    "https://auth.msft.communication.azure.com/Teams.ManageChats"
+                }, authAndConsent.Account).ExecuteAsync();
             // Non-interactive flow
             //var tokenResult = client.AcquireTokenByUsernamePassword("M365Scope", "username", new System.Security.SecureString()).ExecuteAsync();
 
-            Console.WriteLine($"AAD Access token: {authResult.AccessToken}");
+            Console.WriteLine($"AAD Access token: {tokenResult.AccessToken}");
 
             Console.WriteLine("Acquiring ACS Token...");
-            return (authResult.AccessToken, authResult.UniqueId);
+            return (tokenResult.AccessToken, tokenResult.UniqueId);
         }
     }
 }
