@@ -7,11 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Communication.Identity" Version="1.1.0" />
+    <PackageReference Include="Azure.Communication.Common" Version="1.2.1" />
+    <PackageReference Include="Azure.Communication.Identity" Version="1.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.45.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.48.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.22.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.25.0" />
   </ItemGroup>
 
 </Project>
