@@ -4,6 +4,7 @@
     {
         ExchangeToken,
         CreateUserAndToken,
+        DeleteIdentity,
         IssueToken,
         RevokeToken
     }

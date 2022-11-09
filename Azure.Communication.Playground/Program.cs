@@ -66,7 +66,7 @@ namespace Azure.Communication.Playground
                                 {
                                     Content = data
                                 };
-                                string responseContent = await HttpHelper.SendMessage(httpClient, message, secret);
+                                string responseContent = await HttpHelper.SendMessageAsync(httpClient, message, secret);
                                 Console.WriteLine(responseContent);
                                 break;
 
@@ -86,12 +86,12 @@ namespace Azure.Communication.Playground
                             {
                                 Content = new StringContent(@"{""createTokenWithScopes"": [""chat""]}", Encoding.UTF8, "application/json")
                             };
-                            string responseContent = await HttpHelper.SendMessage(httpClient, message, secret);
+                            string responseContent = await HttpHelper.SendMessageAsync(httpClient, message, secret);
                             Console.WriteLine(responseContent);
                             break;
 
                         case ApiType.SDK:
-                            var userTokenResponse = communicationClient.CreateUserAndToken(new List<CommunicationTokenScope> { "chat" });
+                            var userTokenResponse = await communicationClient.CreateUserAndTokenAsync(new List<CommunicationTokenScope> { "chat" });
                             Console.WriteLine($"User: {userTokenResponse.Value.User}\nToken: {userTokenResponse.Value.AccessToken.Token}");
                             break;
                     }
@@ -107,13 +107,32 @@ namespace Azure.Communication.Playground
                             {
                                 Content = new StringContent(@"{""createTokenWithScopes"": [""chat""]}", Encoding.UTF8, "application/json")
                             };
-                            string responseContent = await HttpHelper.SendMessage(httpClient, message, secret);
+                            string responseContent = await HttpHelper.SendMessageAsync(httpClient, message, secret);
                             Console.WriteLine(responseContent);
                             break;
 
                         case ApiType.SDK:
-                            var userTokenResponse = communicationClient.GetToken(new CommunicationUserIdentifier(userId), new List<CommunicationTokenScope> { "chat" });
+                            var userTokenResponse = await communicationClient.GetTokenAsync(new CommunicationUserIdentifier(userId), new List<CommunicationTokenScope> { "chat" });
                             Console.WriteLine($"Token: {userTokenResponse.Value.Token}");
+                            break;
+                    }
+                    break;
+
+                case Operation.DeleteIdentity:
+                    Console.Write("Enter user id: ");
+                    userId = Console.ReadLine();
+                    switch (api)
+                    {
+                        case ApiType.REST:
+                            var message = new HttpRequestMessage(HttpMethod.Delete, $"/identities/{userId}?api-version={versionString}");
+                            string responseContent = await HttpHelper.SendMessageAsync(httpClient, message, secret);
+                            Console.WriteLine(responseContent);
+                            break;
+
+                        case ApiType.SDK:
+                            var user = new CommunicationUserIdentifier(userId);
+                            var response = await communicationClient.DeleteUserAsync(user);
+                            Console.WriteLine(response.Status);
                             break;
                     }
                     break;
@@ -125,13 +144,13 @@ namespace Azure.Communication.Playground
                     {
                         case ApiType.REST:
                             var message = new HttpRequestMessage(HttpMethod.Post, $"/identities/{userId}/:revokeAccessTokens?api-version={versionString}");
-                            string responseContent = await HttpHelper.SendMessage(httpClient, message, secret);
+                            string responseContent = await HttpHelper.SendMessageAsync(httpClient, message, secret);
                             Console.WriteLine(responseContent);
                             break;
 
                         case ApiType.SDK:
                             var user = new CommunicationUserIdentifier(userId);
-                            var response = communicationClient.RevokeTokens(user);
+                            var response = await communicationClient.RevokeTokensAsync(user);
                             Console.WriteLine(response.ReasonPhrase);
                             break;
                     }

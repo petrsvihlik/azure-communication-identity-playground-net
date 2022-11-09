@@ -6,7 +6,7 @@ namespace Azure.Communication.Playground
 {
     internal class HttpHelper
     {
-        public static async Task<string> SendMessage(HttpClient httpClient, HttpRequestMessage message, string secret)
+        public static async Task<string> SendMessageAsync(HttpClient httpClient, HttpRequestMessage message, string secret)
         {
             await message.AddAuthorization(secret, httpClient.BaseAddress.Authority);
             var response = await httpClient.SendAsync(message);
