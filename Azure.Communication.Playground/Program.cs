@@ -30,9 +30,8 @@ namespace Azure.Communication.Playground
             var api = CliHelper.GetEnumFromCLI<ApiType>();
             var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2022_06_01);
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
-            string userId = null;
-
             var (host, secret) = GetEnvSettings(env);
+            string userId;
 
             CommunicationIdentityClient communicationClient = null;
             HttpClient httpClient = null;
