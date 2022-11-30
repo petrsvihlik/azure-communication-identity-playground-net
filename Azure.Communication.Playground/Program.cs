@@ -28,7 +28,7 @@ namespace Azure.Communication.Playground
             var op = CliHelper.GetEnumFromCLI<Operation>();
             var env = CliHelper.GetEnumFromCLI<Environment>();
             var api = CliHelper.GetEnumFromCLI<ApiType>();
-            var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2022_06_01);
+            var version = CliHelper.GetEnumFromCLI(ServiceVersion.V2022_10_01);
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
             var (host, secret) = GetEnvSettings(env);
             string userId;
@@ -182,6 +182,10 @@ namespace Azure.Communication.Playground
             var clientId = _config.GetSection($"AAD:{accountType}:ClientID").Value;
             var tenantId = _config.GetSection($"AAD:{accountType}:TenantID").Value;
             var redirectUri = "http://localhost:3000/mobile";
+            string[] teamsScopes = new[] {
+                    "https://auth.msft.communication.azure.com/Teams.ManageCalls",
+                    "https://auth.msft.communication.azure.com/Teams.ManageChats"
+                };
 
             IPublicClientApplication client = null;
 
@@ -190,17 +194,10 @@ namespace Azure.Communication.Playground
             switch (accountType)
             {
                 case AccountType.SingleTenant:
-                    client = PublicClientApplicationBuilder
-                        .Create(clientId)
-                        .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
-                        .WithRedirectUri(redirectUri)
-                        .Build();
-                    break;
-
                 case AccountType.MultiTenant:
                     client = PublicClientApplicationBuilder
                         .Create(clientId)
-                        .WithAuthority($"https://login.microsoftonline.com/{tenantId}")
+                        .WithAuthority(AzureCloudInstance.AzurePublic, tenantId) // can also be defined as $"https://login.microsoftonline.com/{tenantId}"
                         .WithRedirectUri(redirectUri)
                         .Build();
                     break;
@@ -210,18 +207,11 @@ namespace Azure.Communication.Playground
 
             // Interactive flow
             var authAndConsent = await client
-                .AcquireTokenInteractive(new[] {
-                    "User.Read" })
-                .WithExtraScopesToConsent(new[] {
-                    "https://auth.msft.communication.azure.com/Teams.ManageCalls",
-                    "https://auth.msft.communication.azure.com/Teams.ManageChats"
-                })
+                .AcquireTokenInteractive(new[] { "User.Read" })
+                .WithExtraScopesToConsent(teamsScopes)
                 .ExecuteAsync();
 
-            var tokenResult = await client.AcquireTokenSilent(new[] {
-                    "https://auth.msft.communication.azure.com/Teams.ManageCalls",
-                    "https://auth.msft.communication.azure.com/Teams.ManageChats"
-                }, authAndConsent.Account).ExecuteAsync();
+            var tokenResult = await client.AcquireTokenSilent(teamsScopes, authAndConsent.Account).ExecuteAsync();
             // Non-interactive flow
             //var tokenResult = client.AcquireTokenByUsernamePassword("M365Scope", "username", new System.Security.SecureString()).ExecuteAsync();
 
