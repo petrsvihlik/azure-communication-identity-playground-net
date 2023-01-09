@@ -32,6 +32,7 @@ namespace Azure.Communication.Playground
             string versionString = version.ToString().ToLower().Replace("_", "-")["v".Length..];
             var (host, secret) = GetEnvSettings(env);
             string userId;
+            TimeSpan tokenExpiration;
 
             CommunicationIdentityClient communicationClient = null;
             HttpClient httpClient = null;
@@ -78,19 +79,21 @@ namespace Azure.Communication.Playground
                     break;
 
                 case Operation.CreateUserAndToken:
+                    Console.Write("Enter token expiration in minutes: ");
+                    tokenExpiration = TimeSpan.FromMinutes(double.TryParse(Console.ReadLine(), out double minutes) ? minutes : 60);
                     switch (api)
                     {
                         case ApiType.REST:
                             var message = new HttpRequestMessage(HttpMethod.Post, $"/identities?api-version={versionString}")
                             {
-                                Content = new StringContent(@"{""createTokenWithScopes"": [""chat""]}", Encoding.UTF8, "application/json")
+                                Content = new StringContent(@"{""createTokenWithScopes"": [""chat""], ""expiresInMinutes"":" + tokenExpiration.Minutes + " }", Encoding.UTF8, "application/json")
                             };
                             string responseContent = await HttpHelper.SendMessageAsync(httpClient, message, secret);
                             Console.WriteLine(responseContent);
                             break;
 
                         case ApiType.SDK:
-                            var userTokenResponse = await communicationClient.CreateUserAndTokenAsync(new List<CommunicationTokenScope> { "chat" });
+                            var userTokenResponse = await communicationClient.CreateUserAndTokenAsync(new List<CommunicationTokenScope> { "chat" }, tokenExpiration);
                             Console.WriteLine($"User: {userTokenResponse.Value.User}\nToken: {userTokenResponse.Value.AccessToken.Token}");
                             break;
                     }
